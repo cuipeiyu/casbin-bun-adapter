@@ -42,6 +42,10 @@ const (
 	DefaultTableName  = "casbin_rule"
 )
 
+var (
+	ErrUnknownDriver = errors.New("unknown driver")
+)
+
 type Adapter struct {
 	client *bun.DB
 	ctx    context.Context
@@ -91,13 +95,15 @@ func open(driverName, dataSourceName string) (*bun.DB, error) {
 		return nil, err
 	}
 	var b *bun.DB
-	switch driverName {
-	case "pgx":
+	switch strings.ToLower(driverName) {
+	case "pg", "postgre", "postgres", "postgresql":
 		b = bun.NewDB(db, pgdialect.New())
 	case "mysql":
 		b = bun.NewDB(db, mysqldialect.New())
 	case "mssql":
 		b = bun.NewDB(db, mssqldialect.New())
+	default:
+		return nil, ErrUnknownDriver
 	}
 	return b, nil
 }
